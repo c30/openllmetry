@@ -1,0 +1,177 @@
+digraph OpenLLMetry {
+    rankdir=TB;
+    node [fontname="Arial", fontsize=10];
+    edge [fontname="Arial", fontsize=8];
+    
+    // Graph styling
+    graph [fontname="Arial", fontsize=12, labelloc="t", label="OpenLLMetry模块关系图\nModule Relationship Diagram"];
+    
+    // Define subgraphs for categories
+    subgraph cluster_core {
+        label="核心组件 Core Components";
+        style=filled;
+        fillcolor=lightblue;
+        fontsize=11;
+        fontname="Arial";
+        "traceloop-sdk" [shape=box, style=filled, fillcolor=lightcyan];
+        "opentelemetry-semantic-conventions-ai" [shape=box, style=filled, fillcolor=lightcyan];
+    }
+    
+    subgraph cluster_llm {
+        label="LLM提供商 LLM Providers";
+        style=filled;
+        fillcolor=lightgreen;
+        fontsize=11;
+        fontname="Arial";
+        "opentelemetry-instrumentation-ollama" [shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+        "opentelemetry-instrumentation-replicate" [shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+        "opentelemetry-instrumentation-google-generativeai" [shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+        "opentelemetry-instrumentation-watsonx" [shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+        "opentelemetry-instrumentation-cohere" [shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+        "opentelemetry-instrumentation-openai-agents" [shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+        "opentelemetry-instrumentation-bedrock" [shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+        "opentelemetry-instrumentation-vertexai" [shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+        "opentelemetry-instrumentation-anthropic" [shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+        "opentelemetry-instrumentation-mistralai" [shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+        "opentelemetry-instrumentation-groq" [shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+        "opentelemetry-instrumentation-alephalpha" [shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+        "opentelemetry-instrumentation-openai" [shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+        "opentelemetry-instrumentation-together" [shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+        "opentelemetry-instrumentation-sagemaker" [shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+    }
+    
+    subgraph cluster_vectordb {
+        label="向量数据库 Vector Databases";
+        style=filled;
+        fillcolor=lightpink;
+        fontsize=11;
+        fontname="Arial";
+        "opentelemetry-instrumentation-lancedb" [shape=ellipse, style=filled, fillcolor=mistyrose];
+        "opentelemetry-instrumentation-pinecone" [shape=ellipse, style=filled, fillcolor=mistyrose];
+        "opentelemetry-instrumentation-weaviate" [shape=ellipse, style=filled, fillcolor=mistyrose];
+        "opentelemetry-instrumentation-qdrant" [shape=ellipse, style=filled, fillcolor=mistyrose];
+        "opentelemetry-instrumentation-marqo" [shape=ellipse, style=filled, fillcolor=mistyrose];
+        "opentelemetry-instrumentation-chromadb" [shape=ellipse, style=filled, fillcolor=mistyrose];
+        "opentelemetry-instrumentation-milvus" [shape=ellipse, style=filled, fillcolor=mistyrose];
+    }
+    
+    subgraph cluster_frameworks {
+        label="框架 Frameworks";
+        style=filled;
+        fillcolor=lightyellow;
+        fontsize=11;
+        fontname="Arial";
+        "opentelemetry-instrumentation-crewai" [shape=ellipse, style=filled, fillcolor=lemonchiffon];
+        "opentelemetry-instrumentation-haystack" [shape=ellipse, style=filled, fillcolor=lemonchiffon];
+        "opentelemetry-instrumentation-langchain" [shape=ellipse, style=filled, fillcolor=lemonchiffon];
+        "opentelemetry-instrumentation-llamaindex" [shape=ellipse, style=filled, fillcolor=lemonchiffon];
+        "opentelemetry-instrumentation-transformers" [shape=ellipse, style=filled, fillcolor=lemonchiffon];
+    }
+    
+    subgraph cluster_samples {
+        label="示例应用 Sample Applications";
+        style=filled;
+        fillcolor=lavender;
+        fontsize=11;
+        fontname="Arial";
+        "sample-app" [shape=diamond, style=filled, fillcolor=thistle];
+    }
+    
+    // Other packages
+    "opentelemetry-instrumentation-mcp" [shape=hexagon, style=filled, fillcolor=lightgray];
+
+    // Dependencies
+    "traceloop-sdk" -> "opentelemetry-instrumentation-mistralai" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-openai" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-openai-agents" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-ollama" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-anthropic" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-cohere" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-crewai" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-google-generativeai" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-pinecone" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-qdrant" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-langchain" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-lancedb" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-chromadb" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-transformers" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-together" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-llamaindex" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-milvus" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-haystack" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-bedrock" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-sagemaker" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-replicate" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-vertexai" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-watsonx" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-weaviate" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-alephalpha" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-marqo" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-groq" [color=blue, style=solid];
+    "traceloop-sdk" -> "opentelemetry-instrumentation-mcp" [color=blue, style=solid];
+    "sample-app" -> "opentelemetry-instrumentation-openai" [color=blue, style=solid];
+    "sample-app" -> "opentelemetry-instrumentation-haystack" [color=blue, style=solid];
+    "sample-app" -> "opentelemetry-instrumentation-pinecone" [color=blue, style=solid];
+    "sample-app" -> "opentelemetry-instrumentation-replicate" [color=blue, style=solid];
+    "sample-app" -> "opentelemetry-instrumentation-vertexai" [color=blue, style=solid];
+    "sample-app" -> "opentelemetry-instrumentation-google-generativeai" [color=blue, style=solid];
+    "sample-app" -> "opentelemetry-instrumentation-groq" [color=blue, style=solid];
+    "sample-app" -> "traceloop-sdk" [color=blue, style=solid];
+    "sample-app" -> "opentelemetry-instrumentation-crewai" [color=blue, style=solid];
+    "sample-app" -> "opentelemetry-instrumentation-openai-agents" [color=blue, style=solid];
+    "opentelemetry-instrumentation-ollama" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-replicate" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-mcp" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-google-generativeai" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-crewai" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-watsonx" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-lancedb" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-haystack" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-pinecone" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-weaviate" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-cohere" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-openai-agents" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-bedrock" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-vertexai" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-anthropic" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-langchain" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-qdrant" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-llamaindex" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-mistralai" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-transformers" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-marqo" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-groq" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-alephalpha" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-chromadb" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-openai" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-together" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-sagemaker" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+    "opentelemetry-instrumentation-milvus" -> "opentelemetry-semantic-conventions-ai" [color=red, style=dashed, label="uses"];
+
+    // Legend
+    subgraph cluster_legend {
+        label="图例 Legend";
+        style=filled;
+        fillcolor=white;
+        fontsize=10;
+        fontname="Arial";
+        
+        legend_core [label="核心组件\nCore", shape=box, style=filled, fillcolor=lightcyan];
+        legend_llm [label="LLM提供商\nLLM Provider", shape=ellipse, style=filled, fillcolor=lightgoldenrodyellow];
+        legend_vector [label="向量数据库\nVector DB", shape=ellipse, style=filled, fillcolor=mistyrose];
+        legend_framework [label="框架\nFramework", shape=ellipse, style=filled, fillcolor=lemonchiffon];
+        legend_sample [label="示例\nSample", shape=diamond, style=filled, fillcolor=thistle];
+        legend_other [label="其他\nOther", shape=hexagon, style=filled, fillcolor=lightgray];
+        
+        legend_dep_line [label="本地依赖 Local Dependency", shape=none];
+        legend_use_line [label="使用关系 Uses", shape=none];
+        
+        legend_core -> legend_llm [style=invis];
+        legend_llm -> legend_vector [style=invis];
+        legend_vector -> legend_framework [style=invis];
+        legend_framework -> legend_sample [style=invis];
+        legend_sample -> legend_other [style=invis];
+        legend_other -> legend_dep_line [style=invis];
+        legend_dep_line -> legend_use_line [style=invis];
+    }
+}
