@@ -146,12 +146,21 @@ def _extract_tool_call_data(
 
 class TraceloopCallbackHandler(BaseCallbackHandler):
     def __init__(
-        self, tracer: Tracer, duration_histogram: Histogram, token_histogram: Histogram
+        self,
+        tracer: Tracer,
+        duration_histogram: Histogram,
+        token_histogram: Histogram,
+        time_to_first_token_histogram: Histogram = None,
+        time_per_output_token_histogram: Histogram = None,
+        time_between_token_histogram: Histogram = None,
     ) -> None:
         super().__init__()
         self.tracer = tracer
         self.duration_histogram = duration_histogram
         self.token_histogram = token_histogram
+        self.time_to_first_token_histogram = time_to_first_token_histogram
+        self.time_per_output_token_histogram = time_per_output_token_histogram
+        self.time_between_token_histogram = time_between_token_histogram
         self.spans: dict[UUID, SpanHolder] = {}
         self.run_inline = True
         self._callback_manager: CallbackManager | AsyncCallbackManager = None
@@ -532,6 +541,65 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             set_llm_request(span, serialized, prompts, kwargs, self.spans[run_id])
 
     @dont_throw
+    def on_llm_new_token(
+        self,
+        token: str,
+        *,
+        chunk=None,
+        run_id: UUID,
+        parent_run_id: Union[UUID, None] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Handle new token arrivals for streaming responses."""
+        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+            return
+
+        if run_id not in self.spans:
+            return
+
+        span_holder = self.spans[run_id]
+        current_time = time.time()
+
+        # Record time to first token
+        if span_holder.first_token_time is None:
+            span_holder.first_token_time = current_time
+            if self.time_to_first_token_histogram:
+                time_to_first_token = current_time - span_holder.start_time
+                vendor = span_holder.span.attributes.get(
+                    SpanAttributes.LLM_SYSTEM, "Langchain"
+                )
+                self.time_to_first_token_histogram.record(
+                    time_to_first_token,
+                    attributes={
+                        SpanAttributes.LLM_SYSTEM: vendor,
+                        SpanAttributes.LLM_RESPONSE_MODEL: (
+                            span_holder.request_model or "unknown"
+                        ),
+                    },
+                )
+
+        # Record time between tokens (if this is not the first token)
+        elif (span_holder.last_token_time is not None and
+              self.time_between_token_histogram):
+            time_between_tokens = current_time - span_holder.last_token_time
+            vendor = span_holder.span.attributes.get(
+                SpanAttributes.LLM_SYSTEM, "Langchain"
+            )
+            self.time_between_token_histogram.record(
+                time_between_tokens,
+                attributes={
+                    SpanAttributes.LLM_SYSTEM: vendor,
+                    SpanAttributes.LLM_RESPONSE_MODEL: (
+                        span_holder.request_model or "unknown"
+                    ),
+                },
+            )
+
+        # Update tracking state
+        span_holder.last_token_time = current_time
+        span_holder.output_token_count += 1
+
+    @dont_throw
     def on_llm_end(
         self,
         response: LLMResult,
@@ -638,6 +706,22 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
             },
         )
+
+        # Record time per output token if we have streaming data
+        span_holder = self.spans[run_id]
+        if (self.time_per_output_token_histogram and
+            span_holder.first_token_time is not None and
+                span_holder.output_token_count > 0):
+            # Calculate total output time from first token to end
+            output_time = time.time() - span_holder.first_token_time
+            time_per_token = output_time / span_holder.output_token_count
+            self.time_per_output_token_histogram.record(
+                time_per_token,
+                attributes={
+                    SpanAttributes.LLM_SYSTEM: vendor,
+                    SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
+                },
+            )
 
         self._end_span(span, run_id)
 

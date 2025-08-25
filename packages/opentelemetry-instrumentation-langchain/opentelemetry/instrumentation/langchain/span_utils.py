@@ -34,6 +34,10 @@ class SpanHolder:
     entity_path: str
     start_time: float = field(default_factory=time.time)
     request_model: Optional[str] = None
+    # Timing fields for streaming token metrics
+    first_token_time: Optional[float] = None
+    last_token_time: Optional[float] = None
+    output_token_count: int = 0
 
 
 def _message_type_to_role(message_type: str) -> str:
