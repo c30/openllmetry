@@ -1,0 +1,86 @@
+graph TB
+    %% OpenLLMetry模块关系图 Module Relationship Diagram
+    
+    %% 核心组件 Core Components
+    subgraph Core["核心组件 Core Components"]
+        traceloop_sdk["traceloop-sdk"]
+        opentelemetry_semantic_conventions_ai["opentelemetry-semantic-conventions-ai"]
+    end
+    
+    %% LLM提供商 LLM Providers
+    subgraph LLM["LLM提供商 LLM Providers"]
+        opentelemetry_instrumentation_ollama["opentelemetry-instrumentation-ollama"]
+        opentelemetry_instrumentation_replicate["opentelemetry-instrumentation-replicate"]
+        opentelemetry_instrumentation_google_generativeai["opentelemetry-instrumentation-google-generativeai"]
+        opentelemetry_instrumentation_watsonx["opentelemetry-instrumentation-watsonx"]
+        opentelemetry_instrumentation_cohere["opentelemetry-instrumentation-cohere"]
+        opentelemetry_instrumentation_openai_agents["opentelemetry-instrumentation-openai-agents"]
+        opentelemetry_instrumentation_bedrock["opentelemetry-instrumentation-bedrock"]
+        opentelemetry_instrumentation_vertexai["opentelemetry-instrumentation-vertexai"]
+        more_llm["... and 7 more LLM providers"]
+    end
+    
+    %% 向量数据库 Vector Databases
+    subgraph VectorDB["向量数据库 Vector Databases"]
+        opentelemetry_instrumentation_lancedb["opentelemetry-instrumentation-lancedb"]
+        opentelemetry_instrumentation_pinecone["opentelemetry-instrumentation-pinecone"]
+        opentelemetry_instrumentation_weaviate["opentelemetry-instrumentation-weaviate"]
+        opentelemetry_instrumentation_qdrant["opentelemetry-instrumentation-qdrant"]
+        opentelemetry_instrumentation_marqo["opentelemetry-instrumentation-marqo"]
+        opentelemetry_instrumentation_chromadb["opentelemetry-instrumentation-chromadb"]
+        opentelemetry_instrumentation_milvus["opentelemetry-instrumentation-milvus"]
+    end
+    
+    %% 框架 Frameworks
+    subgraph Frameworks["框架 Frameworks"]
+        opentelemetry_instrumentation_crewai["opentelemetry-instrumentation-crewai"]
+        opentelemetry_instrumentation_haystack["opentelemetry-instrumentation-haystack"]
+        opentelemetry_instrumentation_langchain["opentelemetry-instrumentation-langchain"]
+        opentelemetry_instrumentation_llamaindex["opentelemetry-instrumentation-llamaindex"]
+        opentelemetry_instrumentation_transformers["opentelemetry-instrumentation-transformers"]
+    end
+    
+    %% 示例应用 Sample Applications
+    subgraph Samples["示例应用 Sample Applications"]
+        sample_app["sample-app"]
+    end
+    
+    %% Dependencies
+    traceloop_sdk --> opentelemetry_semantic_conventions_ai
+    traceloop_sdk --> opentelemetry_instrumentation_ollama
+    traceloop_sdk --> opentelemetry_instrumentation_lancedb
+    traceloop_sdk --> opentelemetry_instrumentation_crewai
+    opentelemetry_instrumentation_ollama -.-> opentelemetry_semantic_conventions_ai
+    opentelemetry_instrumentation_lancedb -.-> opentelemetry_semantic_conventions_ai
+    opentelemetry_instrumentation_crewai -.-> opentelemetry_semantic_conventions_ai
+    sample_app --> traceloop_sdk
+
+    %% Styling
+    classDef coreStyle fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef llmStyle fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef vectorStyle fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef frameworkStyle fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef sampleStyle fill:#fff8e1,stroke:#f57c00,stroke-width:2px
+    class traceloop_sdk coreStyle
+    class opentelemetry_semantic_conventions_ai coreStyle
+    class opentelemetry_instrumentation_ollama llmStyle
+    class opentelemetry_instrumentation_replicate llmStyle
+    class opentelemetry_instrumentation_google_generativeai llmStyle
+    class opentelemetry_instrumentation_watsonx llmStyle
+    class opentelemetry_instrumentation_cohere llmStyle
+    class opentelemetry_instrumentation_openai_agents llmStyle
+    class opentelemetry_instrumentation_bedrock llmStyle
+    class opentelemetry_instrumentation_vertexai llmStyle
+    class opentelemetry_instrumentation_lancedb vectorStyle
+    class opentelemetry_instrumentation_pinecone vectorStyle
+    class opentelemetry_instrumentation_weaviate vectorStyle
+    class opentelemetry_instrumentation_qdrant vectorStyle
+    class opentelemetry_instrumentation_marqo vectorStyle
+    class opentelemetry_instrumentation_chromadb vectorStyle
+    class opentelemetry_instrumentation_milvus vectorStyle
+    class opentelemetry_instrumentation_crewai frameworkStyle
+    class opentelemetry_instrumentation_haystack frameworkStyle
+    class opentelemetry_instrumentation_langchain frameworkStyle
+    class opentelemetry_instrumentation_llamaindex frameworkStyle
+    class opentelemetry_instrumentation_transformers frameworkStyle
+    class sample_app sampleStyle

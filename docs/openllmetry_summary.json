@@ -1,0 +1,137 @@
+{
+  "total_packages": 31,
+  "categories": {
+    "core": 2,
+    "llm_providers": 15,
+    "vector_dbs": 7,
+    "frameworks": 5,
+    "samples": 1,
+    "others": 1
+  },
+  "packages": [
+    {
+      "name": "opentelemetry-instrumentation-ollama",
+      "description": "OpenTelemetry Ollama instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-replicate",
+      "description": "OpenTelemetry Replicate instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-mcp",
+      "description": "OpenTelemetry mcp instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-google-generativeai",
+      "description": "OpenTelemetry Google Generative AI instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-crewai",
+      "description": "OpenTelemetry crewAI instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-watsonx",
+      "description": "OpenTelemetry IBM Watsonx Instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-lancedb",
+      "description": "OpenTelemetry Lancedb instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-haystack",
+      "description": "OpenTelemetry Haystack instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-pinecone",
+      "description": "OpenTelemetry Pinecone instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-weaviate",
+      "description": "OpenTelemetry Weaviate instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-cohere",
+      "description": "OpenTelemetry Cohere instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-openai-agents",
+      "description": "OpenTelemetry OpenAI Agents instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-bedrock",
+      "description": "OpenTelemetry Bedrock instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-vertexai",
+      "description": "OpenTelemetry Vertex AI instrumentation"
+    },
+    {
+      "name": "traceloop-sdk",
+      "description": "Traceloop Software Development Kit (SDK) for Python"
+    },
+    {
+      "name": "opentelemetry-instrumentation-anthropic",
+      "description": "OpenTelemetry Anthropic instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-langchain",
+      "description": "OpenTelemetry Langchain instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-qdrant",
+      "description": "OpenTelemetry Qdrant instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-llamaindex",
+      "description": "OpenTelemetry LlamaIndex instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-mistralai",
+      "description": "OpenTelemetry Mistral AI instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-transformers",
+      "description": "OpenTelemetry transformers instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-marqo",
+      "description": "OpenTelemetry Marqo instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-groq",
+      "description": "OpenTelemetry Groq instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-alephalpha",
+      "description": "OpenTelemetry Aleph Alpha instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-chromadb",
+      "description": "OpenTelemetry Chroma DB instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-openai",
+      "description": "OpenTelemetry OpenAI instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-together",
+      "description": "OpenTelemetry Together AI instrumentation"
+    },
+    {
+      "name": "opentelemetry-semantic-conventions-ai",
+      "description": "OpenTelemetry Semantic Conventions Extension for Large Language Models"
+    },
+    {
+      "name": "sample-app",
+      "description": "Sample Application using Traceloop SDK"
+    },
+    {
+      "name": "opentelemetry-instrumentation-sagemaker",
+      "description": "OpenTelemetry SageMaker instrumentation"
+    },
+    {
+      "name": "opentelemetry-instrumentation-milvus",
+      "description": "OpenTelemetry Milvus instrumentation"
+    }
+  ]
+}

@@ -176,6 +176,21 @@ Not sure where to get started? You can:
 - [Book a free pairing session with one of our teammates](mailto:nir@traceloop.com?subject=Pairing%20session&body=I'd%20like%20to%20do%20a%20pairing%20session!)!
 - Join our <a href="https://traceloop.com/slack">Slack</a>, and ask us any questions there.
 
+## 📊 Module Relationship Diagram
+
+Want to understand how all the pieces fit together? Check out our interactive module relationship diagram:
+
+- 🔗 **[View Interactive Diagram](docs/index.html)** - Explore the relationships between all 31 packages
+- 📋 **[Detailed Documentation](docs/MODULE_RELATIONSHIPS.md)** - In-depth explanation of dependencies and architecture
+- 🔧 **[Update Script](scripts/generate_module_diagram.py)** - Regenerate diagrams when structure changes
+
+The diagram shows the relationships between:
+- **2 Core Components** (traceloop-sdk, semantic-conventions)
+- **15 LLM Provider Instrumentations** (OpenAI, Anthropic, Cohere, etc.)
+- **7 Vector Database Instrumentations** (Pinecone, Qdrant, Weaviate, etc.)
+- **5 Framework Instrumentations** (LangChain, LlamaIndex, etc.)
+- **1 Sample Application** and other components
+
 ## 💚 Community & Support
 
 - [Slack](https://traceloop.com/slack) (For live discussion with the community and the Traceloop team)
