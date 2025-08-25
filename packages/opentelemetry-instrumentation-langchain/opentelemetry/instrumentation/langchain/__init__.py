@@ -68,6 +68,25 @@ class LangchainInstrumentor(BaseInstrumentor):
             description="Measures number of input and output tokens used",
         )
 
+        # Create timing histograms for streaming metrics
+        time_to_first_token_histogram = meter.create_histogram(
+            name=Meters.LLM_TIME_TO_FIRST_TOKEN,
+            unit="s",
+            description="Time to first token in streaming responses",
+        )
+
+        time_per_output_token_histogram = meter.create_histogram(
+            name=Meters.LLM_TIME_PER_OUTPUT_TOKEN,
+            unit="s",
+            description="Average time per output token",
+        )
+
+        time_between_token_histogram = meter.create_histogram(
+            name=Meters.LLM_TIME_BETWEEN_TOKEN,
+            unit="s",
+            description="Time between consecutive tokens in streaming responses",
+        )
+
         if not Config.use_legacy_attributes:
             event_logger_provider = kwargs.get("event_logger_provider")
             Config.event_logger = get_event_logger(
@@ -75,7 +94,12 @@ class LangchainInstrumentor(BaseInstrumentor):
             )
 
         traceloopCallbackHandler = TraceloopCallbackHandler(
-            tracer, duration_histogram, token_histogram
+            tracer,
+            duration_histogram,
+            token_histogram,
+            time_to_first_token_histogram,
+            time_per_output_token_histogram,
+            time_between_token_histogram
         )
         wrap_function_wrapper(
             module="langchain_core.callbacks",
