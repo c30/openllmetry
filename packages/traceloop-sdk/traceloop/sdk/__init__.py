@@ -57,6 +57,7 @@ class Traceloop:
         exporter: Optional[SpanExporter] = None,
         metrics_exporter: MetricExporter = None,
         metrics_headers: Dict[str, str] = None,
+        metrics_hourly_export: bool = False,
         logging_exporter: LogExporter = None,
         logging_headers: Dict[str, str] = None,
         processor: Optional[Union[SpanProcessor, List[SpanProcessor]]] = None,
@@ -165,11 +166,16 @@ class Traceloop:
             metrics_headers = (
                 os.getenv("TRACELOOP_METRICS_HEADERS") or metrics_headers or headers
             )
+            # Check for hourly export setting from environment variable or parameter
+            metrics_hourly_export_env = os.getenv("TRACELOOP_METRICS_HOURLY_EXPORT", "").lower()
+            if metrics_hourly_export_env in ("true", "1", "yes"):
+                metrics_hourly_export = True
+                
             if metrics_exporter or processor:
                 print(Fore.GREEN + "Traceloop exporting metrics to a custom exporter")
 
             MetricsWrapper.set_static_params(
-                resource_attributes, metrics_endpoint, metrics_headers
+                resource_attributes, metrics_endpoint, metrics_headers, metrics_hourly_export
             )
             Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
 
