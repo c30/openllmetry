@@ -63,7 +63,7 @@ class AlignedPeriodicMetricReader(MetricReader):
         # Calculate seconds until next aligned time (0, 20, or 40 seconds)
         now = datetime.datetime.now()
         current_second = now.second
-        
+
         # Find the next export time (0, 20, or 40 seconds of current or next minute)
         if current_second < 20:
             # Next export at 20 seconds of current minute
@@ -161,7 +161,8 @@ class MetricsWrapper(object):
             )
 
             # Use either new or old parameter name for backward compatibility
-            use_aligned_export = MetricsWrapper.aligned_periodic_export or MetricsWrapper.hourly_export
+            use_aligned_export = (MetricsWrapper.aligned_periodic_export or
+                                  MetricsWrapper.hourly_export)
 
             obj.__metrics_provider = init_metrics_provider(
                 obj.__metrics_exporter,
@@ -194,7 +195,8 @@ def init_metrics_exporter(endpoint: str, headers: Dict[str, str]) -> MetricExpor
 
 
 def init_metrics_provider(
-    exporter: MetricExporter, resource_attributes: dict = None, aligned_periodic_export: bool = False
+    exporter: MetricExporter, resource_attributes: dict = None,
+    aligned_periodic_export: bool = False
 ) -> MeterProvider:
     resource = (
         Resource.create(resource_attributes)
