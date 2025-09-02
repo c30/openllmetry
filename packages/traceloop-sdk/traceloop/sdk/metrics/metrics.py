@@ -23,9 +23,10 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry import metrics
 
 
-class HourlyExportingMetricReader(MetricReader):
+class AlignedPeriodicMetricReader(MetricReader):
     """
-    A custom MetricReader that exports metrics on the hour (e.g., at 1:00, 2:00, 3:00).
+    A custom MetricReader that exports metrics at aligned intervals within each minute.
+    Specifically exports at 00, 20, and 40 seconds of each minute.
     This ensures that metrics are reported at consistent clock times rather than at
     intervals from application start time.
     """
@@ -55,17 +56,29 @@ class HourlyExportingMetricReader(MetricReader):
             self._collected_metrics.append(metrics_data)
 
     def _start_timer(self):
-        """Start the timer to schedule exports on the hour"""
+        """Start the timer to schedule exports at aligned intervals (00, 20, 40 seconds)"""
         if self._shutdown:
             return
 
-        # Calculate seconds until next hour
+        # Calculate seconds until next aligned time (0, 20, or 40 seconds)
         now = datetime.datetime.now()
-        next_hour = (now + datetime.timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
-        seconds_until_next_hour = (next_hour - now).total_seconds()
+        current_second = now.second
+
+        # Find the next export time (0, 20, or 40 seconds of current or next minute)
+        if current_second < 20:
+            # Next export at 20 seconds of current minute
+            next_export = now.replace(second=20, microsecond=0)
+        elif current_second < 40:
+            # Next export at 40 seconds of current minute
+            next_export = now.replace(second=40, microsecond=0)
+        else:
+            # Next export at 0 seconds of next minute
+            next_export = (now + datetime.timedelta(minutes=1)).replace(second=0, microsecond=0)
+
+        seconds_until_next_export = (next_export - now).total_seconds()
 
         # Schedule the first export
-        self._thread = threading.Timer(seconds_until_next_hour, self._export_and_schedule)
+        self._thread = threading.Timer(seconds_until_next_export, self._export_and_schedule)
         self._thread.start()
 
     def _export_and_schedule(self):
@@ -87,9 +100,9 @@ class HourlyExportingMetricReader(MetricReader):
         except Exception as e:
             print(f"Error during metric export: {e}")
 
-        # Schedule next export in 1 hour (3600 seconds)
+        # Schedule next export in 20 seconds (next aligned interval)
         if not self._shutdown:
-            self._thread = threading.Timer(3600, self._export_and_schedule)
+            self._thread = threading.Timer(20, self._export_and_schedule)
             self._thread.start()
 
     def force_flush(self, timeout_millis: float = 30000) -> bool:
@@ -118,11 +131,17 @@ class HourlyExportingMetricReader(MetricReader):
             return False
 
 
+# Maintain backward compatibility
+HourlyExportingMetricReader = AlignedPeriodicMetricReader
+
+
 class MetricsWrapper(object):
     resource_attributes: dict = {}
     endpoint: str = None
     # if it needs headers?
     headers: Dict[str, str] = {}
+    aligned_periodic_export: bool = False
+    # Backward compatibility alias
     hourly_export: bool = False
     __metrics_exporter: MetricExporter = None
     __metrics_provider: MeterProvider = None
@@ -141,10 +160,14 @@ class MetricsWrapper(object):
                 )
             )
 
+            # Use either new or old parameter name for backward compatibility
+            use_aligned_export = (MetricsWrapper.aligned_periodic_export or
+                                  MetricsWrapper.hourly_export)
+
             obj.__metrics_provider = init_metrics_provider(
                 obj.__metrics_exporter,
                 MetricsWrapper.resource_attributes,
-                MetricsWrapper.hourly_export
+                use_aligned_export
             )
 
         return cls.instance
@@ -154,12 +177,14 @@ class MetricsWrapper(object):
         resource_attributes: dict,
         endpoint: str,
         headers: Dict[str, str],
-        hourly_export: bool = False,
+        aligned_periodic_export: bool = False,
     ) -> None:
         MetricsWrapper.resource_attributes = resource_attributes
         MetricsWrapper.endpoint = endpoint
         MetricsWrapper.headers = headers
-        MetricsWrapper.hourly_export = hourly_export
+        MetricsWrapper.aligned_periodic_export = aligned_periodic_export
+        # Also set the old parameter name for backward compatibility
+        MetricsWrapper.hourly_export = aligned_periodic_export
 
 
 def init_metrics_exporter(endpoint: str, headers: Dict[str, str]) -> MetricExporter:
@@ -170,7 +195,8 @@ def init_metrics_exporter(endpoint: str, headers: Dict[str, str]) -> MetricExpor
 
 
 def init_metrics_provider(
-    exporter: MetricExporter, resource_attributes: dict = None, hourly_export: bool = False
+    exporter: MetricExporter, resource_attributes: dict = None,
+    aligned_periodic_export: bool = False
 ) -> MeterProvider:
     resource = (
         Resource.create(resource_attributes)
@@ -178,9 +204,9 @@ def init_metrics_provider(
         else Resource.create()
     )
 
-    # Choose the appropriate reader based on hourly_export setting
-    if hourly_export:
-        reader = HourlyExportingMetricReader(exporter)
+    # Choose the appropriate reader based on aligned_periodic_export setting
+    if aligned_periodic_export:
+        reader = AlignedPeriodicMetricReader(exporter)
     else:
         reader = PeriodicExportingMetricReader(exporter)
 
