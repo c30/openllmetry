@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 from typing import Dict, Optional
 import datetime
-import threading
 
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
     OTLPMetricExporter as GRPCExporter,
@@ -14,8 +13,6 @@ from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import (
     PeriodicExportingMetricReader,
     MetricExporter,
-    MetricReader,
-    MetricExportResult,
 )
 from opentelemetry.sdk.metrics.view import View, ExplicitBucketHistogramAggregation
 from opentelemetry.sdk.resources import Resource
@@ -23,12 +20,15 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry import metrics
 
 
-class AlignedPeriodicMetricReader(MetricReader):
+class AlignedPeriodicMetricReader(PeriodicExportingMetricReader):
     """
-    A custom MetricReader that exports metrics at aligned intervals within each minute.
+    A MetricReader that exports metrics at aligned intervals within each minute.
     Specifically exports at 00, 20, and 40 seconds of each minute.
     This ensures that metrics are reported at consistent clock times rather than at
     intervals from application start time.
+
+    Inherits from PeriodicExportingMetricReader to leverage OpenTelemetry SDK's
+    robust thread management, export locking, and shutdown handling.
     """
 
     def __init__(
@@ -36,99 +36,71 @@ class AlignedPeriodicMetricReader(MetricReader):
         exporter: MetricExporter,
         export_timeout_millis: Optional[float] = None,
     ):
-        super().__init__()
-        self._exporter = exporter
-        self._export_timeout_millis = export_timeout_millis or 30000  # 30 seconds default
-        self._shutdown = False
-        self._thread = None
-        self._collected_metrics = []
-        self._metrics_lock = threading.Lock()
-        self._start_timer()
+        # Initialize with a dummy interval - we'll override the _ticker method anyway
+        # Use 20 seconds (20000ms) as it matches our aligned interval
+        super().__init__(
+            exporter=exporter,
+            export_interval_millis=20000,  # This will be ignored by our custom _ticker
+            export_timeout_millis=export_timeout_millis or 30000,
+        )
 
-    def _receive_metrics(
-        self,
-        metrics_data,
-        timeout_millis: float = 10000,
-        **kwargs,
-    ) -> None:
-        """Called by MetricReader.collect when it receives a batch of metrics"""
-        with self._metrics_lock:
-            self._collected_metrics.append(metrics_data)
+    def _ticker(self) -> None:
+        """
+        Override the periodic ticker to use aligned timing instead of fixed intervals.
+        Exports at 00, 20, and 40 seconds of each minute.
+        """
+        while not self._shutdown:
+            try:
+                # Calculate seconds until next aligned time (0, 20, or 40 seconds)
+                now = datetime.datetime.now()
+                current_second = now.second
 
-    def _start_timer(self):
-        """Start the timer to schedule exports at aligned intervals (00, 20, 40 seconds)"""
-        if self._shutdown:
-            return
+                # Find the next export time (0, 20, or 40 seconds of current or next minute)
+                if current_second < 20:
+                    # Next export at 20 seconds of current minute
+                    next_export = now.replace(second=20, microsecond=0)
+                elif current_second < 40:
+                    # Next export at 40 seconds of current minute
+                    next_export = now.replace(second=40, microsecond=0)
+                else:
+                    # Next export at 0 seconds of next minute
+                    next_export = (now + datetime.timedelta(minutes=1)).replace(second=0, microsecond=0)
 
-        # Calculate seconds until next aligned time (0, 20, or 40 seconds)
-        now = datetime.datetime.now()
-        current_second = now.second
+                seconds_until_next_export = (next_export - now).total_seconds()
 
-        # Find the next export time (0, 20, or 40 seconds of current or next minute)
-        if current_second < 20:
-            # Next export at 20 seconds of current minute
-            next_export = now.replace(second=20, microsecond=0)
-        elif current_second < 40:
-            # Next export at 40 seconds of current minute
-            next_export = now.replace(second=40, microsecond=0)
-        else:
-            # Next export at 0 seconds of next minute
-            next_export = (now + datetime.timedelta(minutes=1)).replace(second=0, microsecond=0)
+                # Wait until the next aligned export time or until shutdown
+                if self._shutdown_event.wait(seconds_until_next_export):
+                    break  # Shutdown was requested
 
-        seconds_until_next_export = (next_export - now).total_seconds()
+                # Perform the metric collection and export
+                try:
+                    self.collect(timeout_millis=self._export_timeout_millis)
+                except Exception as e:
+                    # Use the same error handling pattern as the parent class
+                    import logging
+                    _logger = logging.getLogger(__name__)
+                    _logger.warning(
+                        "Exception during aligned metric collection: %s. Will try again at next aligned interval.",
+                        e,
+                        exc_info=True,
+                    )
 
-        # Schedule the first export
-        self._thread = threading.Timer(seconds_until_next_export, self._export_and_schedule)
-        self._thread.start()
+            except Exception as e:
+                # Handle any unexpected errors in the timing calculation
+                import logging
+                _logger = logging.getLogger(__name__)
+                _logger.exception("Unexpected error in aligned metric ticker: %s", e)
+                # Fall back to 20-second wait to avoid tight loop
+                if self._shutdown_event.wait(20):
+                    break
 
-    def _export_and_schedule(self):
-        """Export metrics and schedule the next export"""
-        if self._shutdown:
-            return
-
-        # Export metrics
+        # Final collection before shutdown (same as parent class)
         try:
-            with self._metrics_lock:
-                if self._collected_metrics:
-                    # Export collected metrics
-                    for metrics_data in self._collected_metrics:
-                        result = self._exporter.export([metrics_data])
-                        if result != MetricExportResult.SUCCESS:
-                            print(f"Failed to export metrics: {result}")
-                    # Clear collected metrics after export
-                    self._collected_metrics.clear()
+            self.collect(timeout_millis=self._export_timeout_millis)
         except Exception as e:
-            print(f"Error during metric export: {e}")
-
-        # Schedule next export in 20 seconds (next aligned interval)
-        if not self._shutdown:
-            self._thread = threading.Timer(20, self._export_and_schedule)
-            self._thread.start()
-
-    def force_flush(self, timeout_millis: float = 30000) -> bool:
-        """Force flush any pending metrics"""
-        try:
-            with self._metrics_lock:
-                if self._collected_metrics:
-                    for metrics_data in self._collected_metrics:
-                        result = self._exporter.export([metrics_data])
-                        if result != MetricExportResult.SUCCESS:
-                            return False
-                    self._collected_metrics.clear()
-            return True
-        except Exception:
-            return False
-
-    def shutdown(self, timeout_millis: float = 30000) -> bool:
-        """Shutdown the metric reader"""
-        self._shutdown = True
-        if self._thread and self._thread.is_alive():
-            self._thread.cancel()
-
-        try:
-            return self._exporter.shutdown(timeout_millis)
-        except Exception:
-            return False
+            import logging
+            _logger = logging.getLogger(__name__)
+            _logger.warning("Final metric collection failed during shutdown: %s", e, exc_info=True)
 
 
 # Maintain backward compatibility
