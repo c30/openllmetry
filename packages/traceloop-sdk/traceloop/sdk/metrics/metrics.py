@@ -19,6 +19,9 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry import metrics
 
 
+METER_NAME = "traceloop.meter"
+
+
 class MetricsWrapper(object):
     resource_attributes: dict = {}
     endpoint: str = None
@@ -46,6 +49,11 @@ class MetricsWrapper(object):
             )
 
         return cls.instance
+
+    def get_meter(self):
+        if not self.__metrics_provider:
+            return None
+        return self.__metrics_provider.get_meter(METER_NAME)
 
     @staticmethod
     def set_static_params(

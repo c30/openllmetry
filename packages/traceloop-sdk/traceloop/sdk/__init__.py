@@ -41,6 +41,7 @@ class Traceloop:
     AUTO_CREATED_URL = str(Path.home() / ".cache" / "traceloop" / "auto_created_url")
 
     __tracer_wrapper: TracerWrapper
+    __metrics_wrapper: MetricsWrapper
     __fetcher: Optional[Fetcher] = None
     __app_name: Optional[str] = None
     __client: Optional[Client] = None
@@ -272,3 +273,56 @@ class Traceloop:
                 "If you are still getting this error - you are missing the api key"
             )
         return Traceloop.__client
+
+    @staticmethod
+    def get_tracer():
+        """
+        Returns the global tracer instance.
+
+        This method provides access to the global tracer that was initialized
+        during Traceloop.init(). The tracer can be used to create spans for
+        custom tracing.
+
+        Returns:
+            Tracer: The global tracer instance
+
+        Raises:
+            Exception: If Traceloop has not been initialized
+
+        Example:
+            tracer = Traceloop.get_tracer()
+            with tracer.start_as_current_span("my_operation") as span:
+                # Your code here
+                span.set_attribute("key", "value")
+        """
+        if not hasattr(Traceloop, "_Traceloop__tracer_wrapper") or not Traceloop.__tracer_wrapper:
+            raise Exception(
+                "Tracer not initialized, you should call Traceloop.init() first."
+            )
+        return Traceloop.__tracer_wrapper.get_tracer()
+
+    @staticmethod
+    def get_meter():
+        """
+        Returns the global meter instance.
+
+        This method provides access to the global meter that was initialized
+        during Traceloop.init(). The meter can be used to create metrics
+        instruments like counters, histograms, etc.
+
+        Returns:
+            Meter: The global meter instance, or None if metrics are disabled
+
+        Raises:
+            Exception: If Traceloop has not been initialized
+
+        Example:
+            meter = Traceloop.get_meter()
+            if meter:
+                counter = meter.create_counter("my_counter")
+                counter.add(1, {"key": "value"})
+        """
+        if not hasattr(Traceloop, "_Traceloop__metrics_wrapper") or not Traceloop.__metrics_wrapper:
+            # Metrics might be disabled, so return None instead of raising an exception
+            return None
+        return Traceloop.__metrics_wrapper.get_meter()
