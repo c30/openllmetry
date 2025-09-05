@@ -9,6 +9,7 @@ from typing import (
     cast,
     ParamSpec,
     Awaitable,
+    Dict,
 )
 import inspect
 import warnings
@@ -58,6 +59,7 @@ def aentity_method(
     name: Optional[str] = None,
     version: Optional[int] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
+    attributes: Optional[Dict[str, Any]] = None,
 ):
     warnings.warn(
         "DeprecationWarning: The @aentity_method function will be removed in a future version. "
@@ -70,6 +72,7 @@ def aentity_method(
         name=name,
         version=version,
         tlp_span_kind=tlp_span_kind,
+        attributes=attributes,
     )
 
 
@@ -78,6 +81,7 @@ def aentity_class(
     version: Optional[int],
     method_name: str,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
+    attributes: Optional[Dict[str, Any]] = None,
 ):
     warnings.warn(
         "DeprecationWarning: The @aentity_class function will be removed in a future version. "
@@ -91,6 +95,7 @@ def aentity_class(
         version=version,
         method_name=method_name,
         tlp_span_kind=tlp_span_kind,
+        attributes=attributes,
     )
 
 
@@ -138,7 +143,7 @@ def _is_async_method(fn):
     return inspect.iscoroutinefunction(fn) or inspect.isasyncgenfunction(fn)
 
 
-def _setup_span(entity_name, tlp_span_kind, version):
+def _setup_span(entity_name, tlp_span_kind, version, attributes=None):
     """Sets up the OpenTelemetry span and context"""
     if tlp_span_kind in [
         TraceloopSpanKindValues.WORKFLOW,
@@ -163,6 +168,12 @@ def _setup_span(entity_name, tlp_span_kind, version):
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
         if version:
             span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
+
+        # Set custom attributes if provided
+        if attributes:
+            for key, value in attributes.items():
+                if value is not None:
+                    span.set_attribute(key, value)
 
     return span, ctx, ctx_token
 
@@ -207,6 +218,7 @@ def entity_method(
     name: Optional[str] = None,
     version: Optional[int] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
+    attributes: Optional[Dict[str, Any]] = None,
 ) -> Callable[[F], F]:
     def decorate(fn: F) -> F:
         is_async = _is_async_method(fn)
@@ -222,7 +234,7 @@ def entity_method(
                         return
 
                     span, ctx, ctx_token = _setup_span(
-                        entity_name, tlp_span_kind, version
+                        entity_name, tlp_span_kind, version, attributes
                     )
                     _handle_span_input(span, args, kwargs, cls=JSONEncoder)
                     async for item in _ahandle_generator(
@@ -239,7 +251,7 @@ def entity_method(
                         return await fn(*args, **kwargs)
 
                     span, ctx, ctx_token = _setup_span(
-                        entity_name, tlp_span_kind, version
+                        entity_name, tlp_span_kind, version, attributes
                     )
                     _handle_span_input(span, args, kwargs, cls=JSONEncoder)
                     try:
@@ -261,7 +273,7 @@ def entity_method(
                 if not TracerWrapper.verify_initialized():
                     return fn(*args, **kwargs)
 
-                span, ctx, ctx_token = _setup_span(entity_name, tlp_span_kind, version)
+                span, ctx, ctx_token = _setup_span(entity_name, tlp_span_kind, version, attributes)
                 _handle_span_input(span, args, kwargs, cls=JSONEncoder)
                 try:
                     res = fn(*args, **kwargs)
@@ -289,6 +301,7 @@ def entity_class(
     version: Optional[int],
     method_name: str,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
+    attributes: Optional[Dict[str, Any]] = None,
 ):
     def decorator(cls):
         task_name = name if name else camel_to_snake(cls.__qualname__)
@@ -296,7 +309,7 @@ def entity_class(
         setattr(
             cls,
             method_name,
-            entity_method(name=task_name, version=version, tlp_span_kind=tlp_span_kind)(
+            entity_method(name=task_name, version=version, tlp_span_kind=tlp_span_kind, attributes=attributes)(
                 method
             ),
         )
