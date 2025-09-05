@@ -81,6 +81,38 @@ def tool(
     )
 
 
+def llm(
+    name: Optional[str] = None,
+    version: Optional[int] = None,
+    method_name: Optional[str] = None,
+    attributes: Optional[Dict[str, Any]] = None,
+) -> Callable[[F], F]:
+    llm_span_kind = getattr(TraceloopSpanKindValues, 'LLM', TraceloopSpanKindValues.TASK)
+    return task(
+        name=name,
+        version=version,
+        method_name=method_name,
+        tlp_span_kind=llm_span_kind,
+        attributes=attributes,
+    )
+
+
+def mcp(
+    name: Optional[str] = None,
+    version: Optional[int] = None,
+    method_name: Optional[str] = None,
+    attributes: Optional[Dict[str, Any]] = None,
+) -> Callable[[F], F]:
+    mcp_span_kind = getattr(TraceloopSpanKindValues, 'MCP', TraceloopSpanKindValues.TASK)
+    return task(
+        name=name,
+        version=version,
+        method_name=method_name,
+        tlp_span_kind=mcp_span_kind,
+        attributes=attributes,
+    )
+
+
 # Async Decorators - Deprecated
 def atask(
     name: Optional[str] = None,

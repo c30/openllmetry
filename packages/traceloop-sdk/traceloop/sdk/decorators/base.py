@@ -105,6 +105,8 @@ def _handle_generator(span, res):
     try:
         for item in res:
             yield item
+        # Set span status to OK for successful operations
+        span.set_status(Status(StatusCode.OK))
     except Exception as e:
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.record_exception(e)
@@ -120,6 +122,8 @@ async def _ahandle_generator(span, ctx_token, res):
     try:
         async for part in res:
             yield part
+        # Set span status to OK for successful operations
+        span.set_status(Status(StatusCode.OK))
     except Exception as e:
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.record_exception(e)
@@ -178,7 +182,7 @@ def _setup_span(entity_name, tlp_span_kind, version, attributes=None):
     return span, ctx, ctx_token
 
 
-def _handle_span_input(span, args, kwargs, cls=None):
+def _handle_span_input(span, args, kwargs, cls=None, tlp_span_kind=None):
     """Handles entity input logging in JSON for both sync and async functions"""
     try:
         if _should_send_prompts():
@@ -186,8 +190,28 @@ def _handle_span_input(span, args, kwargs, cls=None):
                 {"args": args, "kwargs": kwargs}, **({"cls": cls} if cls else {})
             )
             truncated_json = _truncate_json_if_needed(json_input)
+
+            # Determine the attribute key based on span kind
+            llm_span_kind = getattr(TraceloopSpanKindValues, 'LLM', None)
+            mcp_span_kind = getattr(TraceloopSpanKindValues, 'MCP', None)
+
+            if llm_span_kind and tlp_span_kind == llm_span_kind:
+                attribute_key = getattr(
+                    SpanAttributes, 'GEN_AI_INPUT_MESSAGES',
+                    SpanAttributes.TRACELOOP_ENTITY_INPUT
+                )
+            elif mcp_span_kind and tlp_span_kind == mcp_span_kind:
+                attribute_key = getattr(
+                    SpanAttributes, 'GEN_AI_MCP_REQUEST_ARGUMENT',
+                    SpanAttributes.TRACELOOP_ENTITY_INPUT
+                )
+            else:
+                # For all other span kinds (task, workflow, agent, tool),
+                # use the original attribute
+                attribute_key = SpanAttributes.TRACELOOP_ENTITY_INPUT
+
             span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                attribute_key,
                 truncated_json,
             )
     except TypeError as e:
@@ -236,7 +260,7 @@ def entity_method(
                     span, ctx, ctx_token = _setup_span(
                         entity_name, tlp_span_kind, version, attributes
                     )
-                    _handle_span_input(span, args, kwargs, cls=JSONEncoder)
+                    _handle_span_input(span, args, kwargs, cls=JSONEncoder, tlp_span_kind=tlp_span_kind)
                     async for item in _ahandle_generator(
                         span, ctx_token, fn(*args, **kwargs)
                     ):
@@ -253,10 +277,12 @@ def entity_method(
                     span, ctx, ctx_token = _setup_span(
                         entity_name, tlp_span_kind, version, attributes
                     )
-                    _handle_span_input(span, args, kwargs, cls=JSONEncoder)
+                    _handle_span_input(span, args, kwargs, cls=JSONEncoder, tlp_span_kind=tlp_span_kind)
                     try:
                         res = await fn(*args, **kwargs)
                         _handle_span_output(span, res, cls=JSONEncoder)
+                        # Set span status to OK for successful operations
+                        span.set_status(Status(StatusCode.OK))
                         return res
                     except Exception as e:
                         span.set_status(Status(StatusCode.ERROR, str(e)))
@@ -274,7 +300,7 @@ def entity_method(
                     return fn(*args, **kwargs)
 
                 span, ctx, ctx_token = _setup_span(entity_name, tlp_span_kind, version, attributes)
-                _handle_span_input(span, args, kwargs, cls=JSONEncoder)
+                _handle_span_input(span, args, kwargs, cls=JSONEncoder, tlp_span_kind=tlp_span_kind)
                 try:
                     res = fn(*args, **kwargs)
                 except Exception as e:
@@ -288,6 +314,8 @@ def entity_method(
                     return _handle_generator(span, res)
 
                 _handle_span_output(span, res, cls=JSONEncoder)
+                # Set span status to OK for successful operations
+                span.set_status(Status(StatusCode.OK))
                 _cleanup_span(span, ctx_token)
                 return res
 
