@@ -256,6 +256,11 @@ class SpanAttributes:
     MCP_SESSION_INIT_OPTIONS = "mcp.session.init_options"
     MCP_RESPONSE_VALUE = "mcp.response.value"
 
+    # Input attributes for different span kinds
+    GEN_AI_INPUT_MESSAGES = "gen_ai.input.messages"
+    GEN_AI_MCP_REQUEST_ARGUMENT = "gen_ai.mcp.request_argument"
+    INPUT_MESSAGES = "input.messages"
+
 
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"
@@ -299,4 +304,6 @@ class TraceloopSpanKindValues(Enum):
     TASK = "task"
     AGENT = "agent"
     TOOL = "tool"
+    LLM = "llm"
+    MCP = "mcp"
     UNKNOWN = "unknown"
