@@ -311,6 +311,13 @@ def default_span_processor_on_start(span: Span, parent_context: Context | None =
     """
     Same as _span_processor_on_start but without the usage of self which comes from the sdk, good for standalone usage.
     """
+    # Extract rpc_id from tracestate if available
+    span_context = span.get_span_context()
+    if span_context and span_context.trace_state:
+        rpc_id = span_context.trace_state.get("rpc_id")
+        if rpc_id:
+            span.set_attribute("rpc_id", rpc_id)
+
     workflow_name = get_value("workflow_name")
     if workflow_name is not None:
         span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, str(workflow_name))
