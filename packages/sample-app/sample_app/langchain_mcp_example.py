@@ -36,7 +36,8 @@ from traceloop.sdk.decorators import workflow
 load_dotenv()
 
 # Initialize Traceloop for OpenTelemetry tracing
-# This will automatically instrument MCP operations via opentelemetry-instrumentation-mcp
+# Traceloop SDK auto-detects and instruments MCP, LangChain, and OpenAI operations
+# when their instrumentation packages are installed (opentelemetry-instrumentation-*)
 Traceloop.init(app_name="langchain_mcp_demo")
 
 

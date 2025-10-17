@@ -24,7 +24,8 @@ from mcp.client.stdio import stdio_client
 from traceloop.sdk import Traceloop
 
 # Initialize OpenTelemetry instrumentation
-# This automatically instruments MCP, LangChain, and OpenAI
+# Traceloop SDK automatically detects and instruments MCP, LangChain, and OpenAI
+# when the instrumentation packages are installed (opentelemetry-instrumentation-mcp, etc.)
 Traceloop.init(app_name="langchain_mcp_simple")
 
 
