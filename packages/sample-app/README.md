@@ -6,7 +6,9 @@ This directory contains sample applications demonstrating various integrations w
 
 ### LangChain MCP Integration Demo
 
-**File:** `sample_app/langchain_mcp_example.py`
+**Files:**
+- `sample_app/langchain_mcp_example.py` - Comprehensive demo with multiple modes
+- `sample_app/langchain_mcp_simple_example.py` - Minimal example for learning
 
 A comprehensive demo showing how to integrate LangChain with Model Context Protocol (MCP) servers using OpenTelemetry instrumentation.
 
@@ -17,12 +19,20 @@ A comprehensive demo showing how to integrate LangChain with Model Context Proto
 - End-to-end observability of MCP tool calls
 
 **Usage:**
+
+Full demo:
 ```bash
 # Demo mode with predefined queries
 poetry run python sample_app/langchain_mcp_example.py
 
 # Interactive mode
 poetry run python sample_app/langchain_mcp_example.py --interactive
+```
+
+Simple example:
+```bash
+# Run a single query
+poetry run python sample_app/langchain_mcp_simple_example.py "List files in this directory"
 ```
 
 **Requirements:**
