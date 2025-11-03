@@ -152,7 +152,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
     def __init__(
         self, tracer: Tracer, duration_histogram: Histogram, token_histogram: Histogram,
-        span_cleanup_threshold_seconds: int = None
+        span_cleanup_threshold_seconds: Optional[int] = None
     ) -> None:
         super().__init__()
         self.tracer = tracer
@@ -267,12 +267,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             return
 
         current_time = time.time()
-        stale_run_ids = []
-
-        for run_id, span_holder in self.spans.items():
-            age = current_time - span_holder.start_time
-            if age > self.span_cleanup_threshold:
-                stale_run_ids.append(run_id)
+        stale_run_ids = [
+            run_id for run_id, span_holder in self.spans.items()
+            if current_time - span_holder.start_time > self.span_cleanup_threshold
+        ]
 
         for run_id in stale_run_ids:
             span_holder = self.spans.get(run_id)
