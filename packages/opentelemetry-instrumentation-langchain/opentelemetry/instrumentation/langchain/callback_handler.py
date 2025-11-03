@@ -145,8 +145,14 @@ def _extract_tool_call_data(
 
 
 class TraceloopCallbackHandler(BaseCallbackHandler):
+    # Default threshold for cleaning up stale spans (1 hour in seconds)
+    DEFAULT_SPAN_CLEANUP_THRESHOLD_SECONDS = 3600
+    # Cleanup check interval (every 100 span creations)
+    CLEANUP_CHECK_INTERVAL = 100
+
     def __init__(
-        self, tracer: Tracer, duration_histogram: Histogram, token_histogram: Histogram
+        self, tracer: Tracer, duration_histogram: Histogram, token_histogram: Histogram,
+        span_cleanup_threshold_seconds: int = None
     ) -> None:
         super().__init__()
         self.tracer = tracer
@@ -155,6 +161,12 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         self.spans: dict[UUID, SpanHolder] = {}
         self.run_inline = True
         self._callback_manager: CallbackManager | AsyncCallbackManager = None
+        self.span_cleanup_threshold = (
+            span_cleanup_threshold_seconds
+            if span_cleanup_threshold_seconds is not None
+            else self.DEFAULT_SPAN_CLEANUP_THRESHOLD_SECONDS
+        )
+        self._span_creation_count = 0
 
     @staticmethod
     def _get_name_from_callback(
@@ -238,6 +250,42 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             # and the tracing data is correctly captured.
             pass
 
+    def _cleanup_stale_spans(self) -> None:
+        """
+        Remove spans that haven't been updated for longer than the threshold.
+
+        This method prevents memory leaks by cleaning up stale span entries that
+        may accumulate due to:
+        - Spans that never properly ended due to errors or crashes
+        - Orphaned spans in edge cases
+        - Long-running applications with many span creations
+
+        The cleanup runs periodically (every CLEANUP_CHECK_INTERVAL span creations)
+        to minimize performance impact.
+        """
+        if not self.spans:
+            return
+
+        current_time = time.time()
+        stale_run_ids = []
+
+        for run_id, span_holder in self.spans.items():
+            age = current_time - span_holder.start_time
+            if age > self.span_cleanup_threshold:
+                stale_run_ids.append(run_id)
+
+        for run_id in stale_run_ids:
+            span_holder = self.spans.get(run_id)
+            if span_holder:
+                # End the span if it hasn't been ended yet
+                if span_holder.span.end_time is None:
+                    span_holder.span.end()
+                # Detach context if needed
+                if span_holder.token:
+                    self._safe_detach_context(span_holder.token)
+                # Remove from dictionary
+                del self.spans[run_id]
+
     def _create_span(
         self,
         run_id: UUID,
@@ -249,6 +297,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         entity_path: str = "",
         metadata: Optional[dict[str, Any]] = None,
     ) -> Span:
+        # Periodically cleanup stale spans to prevent memory leaks
+        self._span_creation_count += 1
+        if self._span_creation_count % self.CLEANUP_CHECK_INTERVAL == 0:
+            self._cleanup_stale_spans()
+
         if metadata is not None:
             current_association_properties = (
                 context_api.get_value("association_properties") or {}

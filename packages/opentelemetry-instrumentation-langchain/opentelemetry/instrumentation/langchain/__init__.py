@@ -74,8 +74,12 @@ class LangchainInstrumentor(BaseInstrumentor):
                 __name__, __version__, event_logger_provider=event_logger_provider
             )
 
+        # Get optional span cleanup threshold configuration
+        span_cleanup_threshold = kwargs.get("span_cleanup_threshold_seconds")
+
         traceloopCallbackHandler = TraceloopCallbackHandler(
-            tracer, duration_histogram, token_histogram
+            tracer, duration_histogram, token_histogram,
+            span_cleanup_threshold_seconds=span_cleanup_threshold
         )
         wrap_function_wrapper(
             module="langchain_core.callbacks",
